@@ -1,22 +1,39 @@
 {
-  "content": "[1603139428] A rat on a skateboard, photorealistic",
-  "id": "1210246179871264862",
-  "uri": "https://cdn.discordapp.com/attachments/1016373031741968479/1210246179573604382/flapshatner_1603139428_A_rat_on_a_skateboard_photorealistic_7b45f7e6-c585-4c96-b839-1c229607b35a.png?ex=65e9dc96&is=65d76796&hm=5308315f178c33978491f0bb0feae8e88093ba38a28a995d7a4aeb425b47e89d&",
-  "proxy_url": "https://media.discordapp.net/attachments/1016373031741968479/1210246179573604382/flapshatner_1603139428_A_rat_on_a_skateboard_photorealistic_7b45f7e6-c585-4c96-b839-1c229607b35a.png?ex=65e9dc96&is=65d76796&hm=5308315f178c33978491f0bb0feae8e88093ba38a28a995d7a4aeb425b47e89d&",
-  "flags": 0,
-  "hash": "7b45f7e6-c585-4c96-b839-1c229607b35a",
-  "progress": "done",
-  "options": [
-    { "type": 2, "style": 2, "label": "U1", "custom": "MJ::JOB::upsample::1::7b45f7e6-c585-4c96-b839-1c229607b35a" },
-    { "type": 2, "style": 2, "label": "U2", "custom": "MJ::JOB::upsample::2::7b45f7e6-c585-4c96-b839-1c229607b35a" },
-    { "type": 2, "style": 2, "label": "U3", "custom": "MJ::JOB::upsample::3::7b45f7e6-c585-4c96-b839-1c229607b35a" },
-    { "type": 2, "style": 2, "label": "U4", "custom": "MJ::JOB::upsample::4::7b45f7e6-c585-4c96-b839-1c229607b35a" },
-    { "type": 2, "style": 2, "label": "🔄", "custom": "MJ::JOB::reroll::0::7b45f7e6-c585-4c96-b839-1c229607b35a::SOLO" },
-    { "type": 2, "style": 2, "label": "V1", "custom": "MJ::JOB::variation::1::7b45f7e6-c585-4c96-b839-1c229607b35a" },
-    { "type": 2, "style": 2, "label": "V2", "custom": "MJ::JOB::variation::2::7b45f7e6-c585-4c96-b839-1c229607b35a" },
-    { "type": 2, "style": 2, "label": "V3", "custom": "MJ::JOB::variation::3::7b45f7e6-c585-4c96-b839-1c229607b35a" },
-    { "type": 2, "style": 2, "label": "V4", "custom": "MJ::JOB::variation::4::7b45f7e6-c585-4c96-b839-1c229607b35a" }
-  ],
-  "width": 2048,
-  "height": 2048
+  "type": 2,
+  "application_id": "936929561302675456",
+  "guild_id": "1016373031179923506",
+  "channel_id": "1016373031741968479",
+  "session_id": "7d7f47c8267ee52ba6ea771889cb4fb9",
+  "data": {
+    "version": "1166847114203123795",
+    "id": "938956540159881230",
+    "name": "imagine",
+    "type": 1,
+    "options": [{ "type": 3, "name": "prompt", "value": "sasquatch" }],
+    "application_command": {
+      "id": "938956540159881230",
+      "type": 1,
+      "application_id": "936929561302675456",
+      "version": "1166847114203123795",
+      "name": "imagine",
+      "description": "Create images with Midjourney",
+      "options": [
+        {
+          "type": 3,
+          "name": "prompt",
+          "description": "The prompt to imagine",
+          "required": true,
+          "description_localized": "The prompt to imagine",
+          "name_localized": "prompt"
+        }
+      ],
+      "integration_types": [0],
+      "global_popularity_rank": 1,
+      "description_localized": "Create images with Midjourney",
+      "name_localized": "imagine"
+    },
+    "attachments": []
+  },
+  "nonce": "1210338336657375232",
+  "analytics_location": "slash_ui"
 }
