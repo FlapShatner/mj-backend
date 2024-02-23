@@ -4,12 +4,14 @@ import { uploadImageToCloudinary } from './lib/services.js'
 import { getSuggest } from './utils.js'
 import { generateMj, makeVariations, upscaleImage } from './lib/midjourney.js'
 
+import { tinyLizardWizard } from './temp.js'
+
 dotenv.config()
 const app = express()
 app.use(express.json())
 
 app.get('/', (req, res) => {
-  res.send('Hello World!!!')
+  res.send('Hello From  MJ Backend')
 })
 
 
@@ -25,13 +27,17 @@ app.post('/gen', async (req, res) => {
   const data = req.body
   const { prompt } = data
   try {
-    const response = await generateMj(prompt)
-    // const cloudinaryUrl = await uploadImageToCloudinary(response.url, prompt, 'style')
-    // res.send({
-    //   url: cloudinaryUrl,
-    //   caption: prompt,
-    // })
-    console.log(response)
+    // const response = await generateMj(prompt)
+    // const responseObj = JSON.parse(response)
+    const responseObj = tinyLizardWizard
+    
+    const cloudinaryUrl = await uploadImageToCloudinary(responseObj.uri, prompt, 'style')
+    res.send({
+      meta: JSON.stringify(responseObj),
+      url: cloudinaryUrl,
+      caption: prompt,
+    })
+    console.log(cloudinaryUrl)
   } catch (error) {
     console.log(error)
     res.send(error)
