@@ -27,9 +27,9 @@ app.post('/gen', async (req, res) => {
   const data = req.body
   const { prompt } = data
   try {
-    // const response = await generateMj(prompt)
-    // const responseObj = JSON.parse(response)
-    const responseObj = tinyLizardWizard
+    const response = await generateMj(prompt)
+    const responseObj = JSON.parse(response)
+    // const responseObj = tinyLizardWizard
     
     const cloudinaryUrl = await uploadImageToCloudinary(responseObj.uri, prompt, 'style')
     res.send({
@@ -49,7 +49,7 @@ app.post('/var', async (req, res) => {
   const { job, index } = data
   const response = await makeVariations(job, index)
   res.send(response)
-  // console.log('response', response)
+  console.log('response', response)
 })
 
 app.post('/upscale', async (req, res) => {
