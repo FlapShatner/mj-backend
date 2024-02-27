@@ -3,7 +3,7 @@ import dotenv from 'dotenv'
 import { uploadImageToCloudinary } from './lib/services.js'
 import { getSuggest } from './utils.js'
 import { generateMj, makeVariations, upscaleImage } from './lib/midjourney.js'
-
+import { response } from './temp2.js'
 import { tinyLizardWizard } from './temp.js'
 
 dotenv.config()
@@ -47,23 +47,40 @@ app.post('/gen', async (req, res) => {
 app.post('/var', async (req, res) => {
   const data = req.body
   const { job, index } = data
-  // const response = await makeVariations(job, index)
-  // const responseObj = JSON.parse(response)
-  const responseObj = tinyLizardWizard
+  try{
+  const response = await makeVariations(job, index)
+  const responseObj = await JSON.parse(response)
+// const responseObj = tinyLizardWizard
   const cloudinaryUrl = await uploadImageToCloudinary(responseObj.uri, responseObj.content, 'style')
+  console.log('from server', cloudinaryUrl, JSON.stringify(responseObj) )
   res.send({
-    meta: JSON.stringify(responseObj),
+    meta:await responseObj,
     url: cloudinaryUrl
-  })
-  // console.log('response', response)
+  }).status(200)
+} catch (error) {
+  console.log(error)
+  res.send(error).status(500)
+}
+
 })
 
 app.post('/upscale', async (req, res) => {
   const data = req.body
   const { job, index } = data
-  const response = await upscaleImage(job, index)
-  res.send(response)
-  // console.log('response', response)
+  try{
+    const response = await upscaleImage(job, index)
+    const responseObj = await JSON.parse(response)
+  // const responseObj = tinyLizardWizard
+    const cloudinaryUrl = await uploadImageToCloudinary(responseObj.uri, responseObj.content, 'style')
+    console.log('from server', cloudinaryUrl, JSON.stringify(responseObj) )
+    res.send({
+      meta:await responseObj,
+      url: cloudinaryUrl
+    }).status(200)
+  } catch (error) {
+    console.log(error)
+    res.send(error).status(500)
+  }
 })
 
 const PORT = process.env.PORT || 8888
