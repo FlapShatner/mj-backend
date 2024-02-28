@@ -2,7 +2,7 @@ import express from 'express'
 import dotenv from 'dotenv'
 import { uploadImageToCloudinary } from './lib/services.js'
 import { getSuggest } from './utils.js'
-import { generateMj, makeVariations, upscaleImage } from './lib/midjourney.js'
+import { generateMj, makeVariations, upscaleImage, getProgress } from './lib/midjourney.js'
 import { response } from './temp2.js'
 import { tinyLizardWizard } from './temp.js'
 
@@ -25,9 +25,9 @@ app.post('/suggest', async (req, res) => {
 
 app.post('/gen', async (req, res) => {
   const data = req.body
-  const { prompt } = data
+  const { prompt, id } = data
   try {
-    const response = await generateMj(prompt)
+    const response = await generateMj(prompt, id)
     const responseObj = JSON.parse(response)
     // const responseObj = tinyLizardWizard
     
@@ -61,7 +61,6 @@ app.post('/var', async (req, res) => {
   console.log(error)
   res.send(error).status(500)
 }
-
 })
 
 app.post('/upscale', async (req, res) => {
@@ -81,6 +80,14 @@ app.post('/upscale', async (req, res) => {
     console.log(error)
     res.send(error).status(500)
   }
+})
+
+app.get('/prog/:id', (req, res) => {
+  const { id } = req.params
+  const progress = getProgress(id)
+  console.log("progess:",progress)
+  
+  // res.send(progress).status(200)
 })
 
 const PORT = process.env.PORT || 8888
