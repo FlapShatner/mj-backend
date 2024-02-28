@@ -19,6 +19,9 @@
     "form-data": "^4.0.0",
     "freezer-midjourney-api": "^4.0.5",
     "midjourney": "^4.3.13",
-    "nodemon": "^3.0.3"
+    "nodemon": "^3.0.3",
+    "uuid": "^9.0.1",
+    "uuidv4": "^6.2.13",
+    "ws": "^8.16.0"
   }
 }
