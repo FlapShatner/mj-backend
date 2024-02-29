@@ -4,7 +4,7 @@ import dotenv from 'dotenv'
 import { v4 as uuidv4 } from 'uuid'
 import { uploadImageToCloudinary } from './lib/services.js'
 import { getSuggest } from './utils.js'
-import { client, makeVariations, upscaleImage } from './lib/midjourney.js'
+import { client, upscaleImage } from './lib/midjourney.js'
 import { response } from './temp2.js'
 import { tinyLizardWizard } from './temp.js'
 import http from 'http';
@@ -44,16 +44,48 @@ app.post('/suggest', async (req, res) => {
 
 app.post('/var', async (req, res) => {
   const data = req.body
-  const { job, index } = data
+  const { job, index, wsId } = data
   try{
+    let prog = 0
+    const update = (progress) => {
+      if (clients[wsId]) {
+        const ws = clients[wsId]
+        ws.send(JSON.stringify({status: progress}))
+      }
+    }
+   const makeVariations = async (job, index) => {
+      client.Close()
+      await client.init()
+      const data = JSON.parse(job)
+      console.log('data', data)
+      try {
+        const variations = await client.Variation({
+          index: index,
+          msgId: data.id,
+          hash: data.hash,
+          flags: data.flags,
+          content: data.content,
+          // content: prompt, //remix mode require content
+          loading: (uri, progress) => {
+            prog = prog + 23
+            update(`${prog}%`)
+            console.log('loading', uri, 'progress', prog)
+          },
+        })
+        return JSON.stringify(variations)
+        // console.log('variations',variations)
+      } catch (error) {
+        return { error: error.message }
+      }
+    }
   const response = await makeVariations(job, index)
   const responseObj = await JSON.parse(response)
 // const responseObj = tinyLizardWizard
-  const cloudinaryUrl = await uploadImageToCloudinary(responseObj.uri, responseObj.content, 'style')
-  console.log('from server', cloudinaryUrl, JSON.stringify(responseObj) )
+  const imgData = await uploadImageToCloudinary(responseObj.uri, responseObj.content, 'style')
+  console.log('from server', imgData, JSON.stringify(responseObj) )
   res.send({
     meta:await responseObj,
-    url: cloudinaryUrl
+    imgData: imgData
   }).status(200)
 } catch (error) {
   console.log(error)
@@ -68,11 +100,11 @@ app.post('/upscale', async (req, res) => {
     const response = await upscaleImage(job, index)
     const responseObj = await JSON.parse(response)
   // const responseObj = tinyLizardWizard
-    const cloudinaryUrl = await uploadImageToCloudinary(responseObj.uri, responseObj.content, 'style')
-    console.log('from server', cloudinaryUrl, JSON.stringify(responseObj) )
+    const imgData = await uploadImageToCloudinary(responseObj.uri, responseObj.content, 'style')
+    console.log('from server', imgData, JSON.stringify(responseObj) )
     res.send({
       meta:await responseObj,
-      url: cloudinaryUrl
+      imgData: imgData
     }).status(200)
   } catch (error) {
     console.log(error)
@@ -114,21 +146,14 @@ app.post('/gen', async (req, res) => {
     }
     const response = await generateMj(prompt)
     const responseObj = JSON.parse(response)
-    const cloudinaryUrl = await uploadImageToCloudinary(responseObj.uri, prompt, 'style')
+    const imgData = await uploadImageToCloudinary(responseObj.uri, prompt, 'style')
 
-    if (clients[wsId]) {
-      clients[wsId].send(
-        JSON.stringify({
-          finalResult: {
-            meta: JSON.stringify(responseObj),
-            url: cloudinaryUrl,
-            caption: prompt,
-          },
-        })
-      )
-    }
-    res.json({ message: 'Processing started, updates will be sent via WebSocket.' })
-    console.log(cloudinaryUrl)
+    res.json(JSON.stringify({
+              meta: JSON.stringify(responseObj),
+              imgData: imgData,
+              caption: prompt,
+            }))
+    console.log(imgData)
   } catch (error) {
     console.log(error)
     res.status(500).send(error)
