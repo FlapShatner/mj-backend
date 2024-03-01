@@ -66,8 +66,8 @@ app.post('/var', async (req, res) => {
           flags: data.flags,
           content: data.content,
           // content: prompt, //remix mode require content
-          loading: (uri, progress) => {
-            prog = prog + 23
+          loading: (uri, progress) => {            
+              prog = prog < 76 ? prog + 23: 100    
             update(`${prog}%`)
             console.log('loading', uri, 'progress', prog)
           },
@@ -146,13 +146,13 @@ app.post('/gen', async (req, res) => {
     }
     const response = await generateMj(prompt)
     const responseObj = JSON.parse(response)
-    const imgData = await uploadImageToCloudinary(responseObj.uri, prompt, 'style')
+    const imgData = await uploadImageToCloudinary(responseObj.uri, responseObj.content, 'style')
 
-    res.json(JSON.stringify({
-              meta: JSON.stringify(responseObj),
+    res.send({
+              meta: await responseObj,
               imgData: imgData,
               caption: prompt,
-            }))
+            }).status(200)
     console.log(imgData)
   } catch (error) {
     console.log(error)
