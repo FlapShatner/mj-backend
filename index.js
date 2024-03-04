@@ -5,8 +5,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { uploadImageToCloudinary } from './lib/services.js'
 import { getSuggest } from './utils.js'
 import { client, upscaleImage } from './lib/midjourney.js'
-import { response } from './temp2.js'
-import { tinyLizardWizard } from './temp.js'
+
 import http from 'http';
 
 dotenv.config()
