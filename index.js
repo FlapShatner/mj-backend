@@ -111,14 +111,6 @@ app.post('/upscale', async (req, res) => {
   }
 })
 
-// app.get('/prog/:id', (req, res) => {
-//   const { id } = req.params
-//   console.log("id:",id)
-//   const progress = getProgress(id)
-//   console.log("progess:",progress)  
-//   res.send(progress).status(200)
-// })
-
 
 
 app.post('/gen', async (req, res) => {
