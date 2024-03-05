@@ -1,5 +1,5 @@
 import express from 'express'
-import {WebSocket, WebSocketServer} from 'ws'
+import { WebSocketServer} from 'ws'
 import dotenv from 'dotenv'
 import { v4 as uuidv4 } from 'uuid'
 import { uploadImageToCloudinary } from './lib/services.js'
