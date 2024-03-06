@@ -22,7 +22,6 @@ wss.on('connection', function connection(ws) {
   const id = uuidv4()
   clients[id] = ws
   ws.send(JSON.stringify({ id: id }))
-
   ws.on('close', function close() {
     delete clients[id]
     console.log('disconnected')
@@ -42,7 +41,7 @@ app.post('/suggest', async (req, res) => {
 
 app.post('/var', async (req, res) => {
   const data = req.body
-  const { job, index, wsId } = data
+  const { job, index, prompt, wsId } = data
   try {
     let prog = 0
     const update = (progress) => {
@@ -51,9 +50,8 @@ app.post('/var', async (req, res) => {
         ws.send(JSON.stringify({ status: progress }))
       }
     }
-    const makeVariations = async (job, index) => {
-      // client.Close()
-      // await client.init()
+    const makeVariations = async (job, prompt, index) => {
+      await client.init()
       const data = JSON.parse(job)
       console.log('data', data)
       try {
@@ -62,7 +60,7 @@ app.post('/var', async (req, res) => {
           msgId: data.id,
           hash: data.hash,
           flags: data.flags,
-          content: data.content,
+          content: prompt,
           // content: prompt, //remix mode require content
           loading: (uri, progress) => {
             prog = prog < 76 ? prog + 23 : 100
@@ -76,7 +74,7 @@ app.post('/var', async (req, res) => {
         return { error: error.message }
       }
     }
-    const response = await makeVariations(job, index)
+    const response = await makeVariations(job, prompt,  index)
     const responseObj = await JSON.parse(response)
     // const responseObj = tinyLizardWizard
     const imgData = await uploadImageToCloudinary(responseObj.uri, responseObj.content, 'style')
@@ -125,7 +123,7 @@ app.post('/gen', async (req, res) => {
       }
     }
     const generateMj = async (prompt) => {
-      // await client.init()
+      await client.init()
       try {
         const job = await client.Imagine(prompt, (uri, progress) => {
           update(progress)
