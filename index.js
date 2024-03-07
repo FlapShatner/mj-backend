@@ -13,7 +13,7 @@ const app = express()
 
 const server = http.createServer(app)
 app.use(express.json())
-
+server.timeout = 120000
 const wss = new WebSocketServer({ server })
 const clients = {}
 
