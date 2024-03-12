@@ -13,7 +13,6 @@ const app = express()
 
 const server = http.createServer(app)
 app.use(express.json())
-server.timeout = 120000
 const wss = new WebSocketServer({ server })
 const clients = {}
 
@@ -41,6 +40,7 @@ app.post('/suggest', async (req, res) => {
 
 app.post('/var', async (req, res) => {
   const data = req.body
+  // console.log('data', data)
   const { job, index, prompt, wsId } = data
   try {
     let prog = 0
@@ -48,12 +48,20 @@ app.post('/var', async (req, res) => {
       if (clients[wsId]) {
         const ws = clients[wsId]
         ws.send(JSON.stringify({ status: progress }))
+        console.log('progress', progress)
+      }
+    }
+    const sendVariations = async (data) => {
+      const {meta, imgData} = data
+      if (clients[wsId]) {
+        const ws = clients[wsId]
+        ws.send({payload: {meta: meta, imgData: imgData}})
       }
     }
     const makeVariations = async (job, prompt, index) => {
       await client.init()
       const data = JSON.parse(job)
-      console.log('data', data)
+      // console.log('data', data)
       try {
         const variations = await client.Variation({
           index: index,
@@ -78,7 +86,8 @@ app.post('/var', async (req, res) => {
     const responseObj = await JSON.parse(response)
     // const responseObj = tinyLizardWizard
     const imgData = await uploadImageToCloudinary(responseObj.uri, responseObj.content, 'style')
-    console.log('from server', imgData, JSON.stringify(responseObj))
+    // console.log('from server', imgData, JSON.stringify(responseObj))
+    sendVariations({meta: await responseObj, imgData: imgData})
     res
       .send({
         meta: await responseObj,
@@ -99,7 +108,7 @@ app.post('/upscale', async (req, res) => {
     const responseObj = await JSON.parse(response)
     // const responseObj = tinyLizardWizard
     const imgData = await uploadImageToCloudinary(responseObj.uri, responseObj.content, 'style')
-    console.log('from server', imgData, JSON.stringify(responseObj))
+    // console.log('from server', imgData, JSON.stringify(responseObj))
     res
       .send({
         meta: await responseObj,
@@ -145,7 +154,7 @@ app.post('/gen', async (req, res) => {
         caption: prompt,
       })
       .status(200)
-    console.log(imgData)
+    // console.log(imgData)
   } catch (error) {
     console.log(error)
     res.status(500).send(error)
