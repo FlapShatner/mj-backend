@@ -16,95 +16,171 @@ app.use(express.json())
 app.use('/suggest', suggestRoute)
 app.use('/upscale', upscaleRoute)
 
+app.get('/', (req, res) => {
+  res.send('Hello From  MJ Backend')
+})
+
 const wss = new WebSocketServer({ server })
 const connections = {}
 const users = {}
 
 const handleClose = (uuid) => {
- console.log(`connection ${uuid} closed`)
- delete connections[uuid]
- broadcast()
+  console.log(`connection ${uuid} closed`)
+  delete connections[uuid]
+  broadcast()
 }
 
 const broadcast = () => {
- Object.keys(connections).forEach((uuid) => {
-  const connection = connections[uuid]
-  const message = JSON.stringify(users)
-  connection.send(message)
- })
+  Object.keys(connections).forEach((uuid) => {
+    const connection = connections[uuid]
+    const message = JSON.stringify(users)
+    connection.send(message)
+  })
 }
 
 wss.on('connection', (connection, req) => {
- console.log('connected')
- const id = uuidv4()
- connections[id] = connection
- connection.send(JSON.stringify({ event: 'id', id: id }))
- connection.on('close', () => handleClose(id))
- connection.on('message', (message) => handleMessage(message, id))
+  console.log('connected')
+  const id = uuidv4()
+  connections[id] = connection
+  connection.send(JSON.stringify({ event: 'id', id: id }))
+  connection.on('close', () => handleClose(id))
+  connection.on('message', (message) => handleMessage(message, id))
 })
 const update = (progress, id) => {
- console.log('update', progress, id)
- if (connections[id]) {
-  const ws = connections[id]
-  ws.send(JSON.stringify({ event: 'status', status: progress }))
- }
+  console.log('update', progress, id)
+  if (connections[id]) {
+    const ws = connections[id]
+    ws.send(JSON.stringify({ event: 'status', status: progress }))
+  }
 }
 
-const sendResults = (results, id) => {
- if (connections[id]) {
-  const ws = connections[id]
-  ws.send(JSON.stringify({ event: 'variations', data: results }))
- }
+const sendResults = (resultsObj) => {
+  const { id } = resultsObj
+  if (connections[id]) {
+    const ws = connections[id]
+    ws.send(JSON.stringify(resultsObj))
+  }
+}
+
+const handleGenerate = async (message, id) => {
+  const { prompt, shape, caption } = message.data
+  if (!prompt) return
+  await client.init()
+  // console.log('prompt', prompt)
+  const response = await makeGenerate(prompt, id)
+  const responseObj = await JSON.parse(response)
+  const imgData = await uploadImageToCloudinary(responseObj.uri, responseObj.content)
+  const resultsObj = {
+    imgData: imgData,
+    meta: response,
+    id: id,
+    shape: shape,
+    caption: caption,
+    prompt: prompt,
+    event: 'generate',
+  }
+  sendResults(resultsObj)
+  console.log('response', response)
+}
+
+const handleUpscale = async (message, id) => {
+  console.log('upscale message', message)
+  const { meta, activeIndex, shape, prompt, caption, style } = message.data
+  const response = await makeUpscale(meta, activeIndex)
+  const responseObj = await JSON.parse(response)
+  const imgData = await uploadImageToCloudinary(responseObj.uri, responseObj.content, style)
+  const resultsObj = {
+    imgData: imgData,
+    meta: response,
+    id: id,
+    shape: shape,
+    caption: caption,
+    prompt: prompt,
+    style: style,
+    event: 'upscale',
+  }
+  sendResults(resultsObj)
+}
+
+const makeGenerate = async (prompt, id) => {
+  await client.init()
+  const job = await client.Imagine(prompt, (uri, progress) => {
+    update(progress, id)
+    console.log('loading', uri, 'progress', progress)
+  })
+  return JSON.stringify(job)
+}
+
+const makeUpscale = async (job, index) => {
+  await client.init()
+  const data = JSON.parse(job)
+  const upscale = await client.Upscale({
+    index: index,
+    msgId: data.id,
+    hash: data.hash,
+    flags: data.flags,
+    loading: (uri, progress) => {
+      console.log('loading', uri, 'progress', progress)
+    },
+  })
+  return JSON.stringify(upscale)
+}
+
+const handleVariations = async (message, id) => {
+  const dataObj = { ...message.data, id: id, event: 'variations' }
+  const response = await makeVariations(dataObj)
+  const responseObj = JSON.parse(response)
+  const imgData = await uploadImageToCloudinary(responseObj.uri, responseObj.content, dataObj.style)
+  const resultsObj = {
+    imgData: imgData,
+    meta: response,
+    id: id,
+    event: 'variations',
+    shape: dataObj.shape,
+    caption: dataObj.caption,
+    prompt: dataObj.prompt,
+    style: dataObj.style,
+  }
+  sendResults(resultsObj)
+}
+
+const makeVariations = async (dataObj) => {
+  const { meta, activeIndex, prompt, id } = dataObj
+  await client.init()
+  const data = JSON.parse(meta)
+  try {
+    const variations = await client.Variation({
+      index: activeIndex,
+      msgId: data.id,
+      hash: data.hash,
+      flags: data.flags,
+      content: prompt,
+      loading: (uri, progress) => {
+        update(progress, id)
+        console.log('loading', uri, 'progress', progress)
+      },
+    })
+    return JSON.stringify(variations)
+  } catch (error) {
+    return { error: error.message }
+  }
 }
 
 const handleMessage = async (bytes, id) => {
- const message = JSON.parse(bytes)
- console.log('message', message)
- if (message.data) {
-  if (message.event === 'generate') {
-   const { prompt } = message.data
-   if (!prompt) return
-   await client.init()
-   console.log('prompt', prompt)
-   const job = await client.Imagine(prompt, (uri, progress) => {
-    update(progress, id)
-    console.log('loading', uri, 'progress', progress)
-   })
-   const responseObj = JSON.parse(job)
-   const imgData = await uploadImageToCloudinary(responseObj.uri, responseObj.content, 'style')
-
-   sendResults(imgData, id)
-   console.log('job', job)
+  const message = JSON.parse(bytes)
+  // console.log('message', message)
+  if (message.data) {
+    if (message.event === 'generate') {
+      handleGenerate(message, id)
+    } else if (message.event === 'variations') {
+      handleVariations(message, id)
+    } else if (message.event === 'upscale') {
+      handleUpscale(message, id)
+    }
   }
- }
 }
-
-// const makeVariations = async (job, prompt, index) => {
-//  await client.init()
-//  const data = JSON.parse(job)
-//  console.log('data', data)
-//  try {
-//   const variations = await client.Variation({
-//    index: index,
-//    msgId: data.id,
-//    hash: data.hash,
-//    flags: data.flags,
-//    content: prompt,
-//    // content: prompt, //remix mode require content
-//    loading: (uri, progress) => {
-//     prog = prog < 76 ? prog + 23 : 100
-//     update(`${prog}%`)
-//     console.log('loading', uri, 'progress', prog)
-//    },
-//   })
-//   return JSON.stringify(variations)
-//   // console.log('variations',variations)
-//  } catch (error) {
-//   return { error: error.message }
-//  }
-// }
 
 const PORT = process.env.PORT || 8888
 server.listen(PORT, () => {
- console.log(`Server is running on port ${PORT}`)
+  console.log(`Server is running on port ${PORT}`)
 })
