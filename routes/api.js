@@ -1,6 +1,7 @@
 import express from 'express'
 import { upscaleImage } from '../lib/midjourney.js'
 import { uploadImageToCloudinary } from '../lib/services.js'
+import { getSuggest } from '../utils.js'
 import { client } from '../lib/midjourney.js'
 const app = express()
 app.use(express.json())
@@ -34,6 +35,13 @@ router.post('/upscale', async (req, res) => {
   res.send(error).status(500)
   return
  }
+})
+
+router.post('/suggest', async (req, res) => {
+ const data = req.body
+ const { prompt } = data
+ const suggestions = await getSuggest(prompt)
+ res.send(suggestions)
 })
 
 const makeUpscale = async (job, index) => {
