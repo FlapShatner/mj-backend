@@ -57,6 +57,7 @@ const update = (progress, id) => {
 }
 
 const sendResults = (resultsObj) => {
+ console.log('resultsObj', resultsObj)
  const { id } = resultsObj
  if (connections[id]) {
   const ws = connections[id]
@@ -72,26 +73,40 @@ const sendError = (error, id) => {
 }
 
 const handleGenerate = async (message, id) => {
- const { prompt, shape, caption } = message.data
+ if (!message.data.data) return
+ console.log('generate message recieved from ', id, message.data.data)
+ const { prompt, caption, productId, isGrid } = JSON.parse(message.data.data)
  if (!prompt) return
- await client.init()
- // console.log('prompt', prompt)
- const response = await makeGenerate(prompt, id)
- console.log('response', response)
- if (response.error) {
-  sendError(response.error, id)
-  return
+ //  await client.init()
+ //  console.log('message:', message)
+ //  const response = await makeGenerate(prompt, id)
+ //  console.log('response', response)
+ //  if (response.error) {
+ //   sendError(response.error, id)
+ //   return
+ //  }
+ //  const responseObj = await JSON.parse(response)
+ //  const imgData = await uploadImageToCloudinary(responseObj.uri, responseObj.content)
+ //  const imgData = await uploadImageToCloudinary('https://res.cloudinary.com/dkxssdk96/image/upload/v1715617819/yakr7wsmcgk8mve1gwao.png', 'content', 'style')
+ const stackData = {
+  publicId: 'tvh8e1qvnlgpb2s4mtbj',
+  url: 'https://res.cloudinary.com/dkxssdk96/image/upload/v1715967570/tvh8e1qvnlgpb2s4mtbj.png',
  }
- const responseObj = await JSON.parse(response)
- const imgData = await uploadImageToCloudinary(responseObj.uri, responseObj.content)
+ const gridData = {
+  publicId: 'yakr7wsmcgk8mve1gwao',
+  url: 'https://res.cloudinary.com/dkxssdk96/image/upload/v1715617819/yakr7wsmcgk8mve1gwao.png',
+ }
  const resultsObj = {
-  imgData: imgData,
-  meta: response,
   id: id,
-  shape: shape,
-  caption: caption,
-  prompt: prompt,
   event: 'generate',
+  data: {
+   imgData: caption === 'stack' ? stackData : gridData,
+   productId: productId,
+   isGrid: isGrid,
+   meta: 'response',
+   caption: caption,
+   prompt: prompt,
+  },
  }
  sendResults(resultsObj)
 }
@@ -194,7 +209,7 @@ const makeVariations = async (dataObj) => {
 
 const handleMessage = async (bytes, id) => {
  const message = JSON.parse(bytes)
- // console.log('message', message)
+ //  console.log('message', message)
  if (message.data) {
   if (message.event === 'generate') {
    handleGenerate(message, id)
