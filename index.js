@@ -75,7 +75,7 @@ const sendError = (error, id) => {
 const handleGenerate = async (message, id) => {
  if (!message.data.data) return
  console.log('generate message recieved from ', id, message.data.data)
- const { prompt, caption, productId, isGrid } = JSON.parse(message.data.data)
+ const { prompt, caption, productId, isGrid, ff, size, secVar, style } = JSON.parse(message.data.data)
  if (!prompt) return
  //  await client.init()
  //  console.log('message:', message)
@@ -103,7 +103,11 @@ const handleGenerate = async (message, id) => {
    imgData: caption === 'stack' ? stackData : gridData,
    productId: productId,
    isGrid: isGrid,
+   ff: ff,
+   size: size,
+   secVar: secVar,
    meta: 'response',
+   style: style,
    caption: caption,
    prompt: prompt,
   },
