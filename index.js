@@ -8,6 +8,7 @@ import { uploadImageToCloudinary } from './lib/services.js'
 import suggestRoute from './routes/suggest.js'
 import api from './routes/api.js'
 import auth from './routes/auth.js'
+import { job } from './job.js'
 
 dotenv.config()
 const app = express()
@@ -52,7 +53,7 @@ const update = (progress, id) => {
  console.log('update', progress, id)
  if (connections[id]) {
   const ws = connections[id]
-  ws.send(JSON.stringify({ event: 'status', status: progress }))
+  ws.send(JSON.stringify({ event: 'status', data: progress }))
  }
 }
 
@@ -75,41 +76,42 @@ const sendError = (error, id) => {
 const handleGenerate = async (message, id) => {
  if (!message.data.data) return
  console.log('generate message recieved from ', id, message.data.data)
- const { prompt, caption, productId, isGrid, ff, size, secVar, style } = JSON.parse(message.data.data)
+ const { prompt, caption, productId, isGrid, ff, size, secVar, style, secVarLabel } = JSON.parse(message.data.data)
  if (!prompt) return
- //  await client.init()
- //  console.log('message:', message)
- //  const response = await makeGenerate(prompt, id)
- //  console.log('response', response)
- //  if (response.error) {
- //   sendError(response.error, id)
- //   return
+ await client.init()
+ console.log('message:', message)
+ const response = await makeGenerate(prompt, id)
+ console.log('response', response)
+ if (response.error) {
+  sendError(response.error, id)
+  return
+ }
+ const responseObj = await JSON.parse(response)
+ const imgData = await uploadImageToCloudinary(responseObj.uri, responseObj.content)
+ //   const imgData = await uploadImageToCloudinary('https://res.cloudinary.com/dkxssdk96/image/upload/v1715617819/yakr7wsmcgk8mve1gwao.png', 'content', 'style')
+ //  const stackData = {
+ //   publicId: 'tvh8e1qvnlgpb2s4mtbj',
+ //   url: 'https://res.cloudinary.com/dkxssdk96/image/upload/v1715967570/tvh8e1qvnlgpb2s4mtbj.png',
  //  }
- //  const responseObj = await JSON.parse(response)
- //  const imgData = await uploadImageToCloudinary(responseObj.uri, responseObj.content)
- //  const imgData = await uploadImageToCloudinary('https://res.cloudinary.com/dkxssdk96/image/upload/v1715617819/yakr7wsmcgk8mve1gwao.png', 'content', 'style')
- const stackData = {
-  publicId: 'tvh8e1qvnlgpb2s4mtbj',
-  url: 'https://res.cloudinary.com/dkxssdk96/image/upload/v1715967570/tvh8e1qvnlgpb2s4mtbj.png',
- }
- const gridData = {
-  publicId: 'yakr7wsmcgk8mve1gwao',
-  url: 'https://res.cloudinary.com/dkxssdk96/image/upload/v1715617819/yakr7wsmcgk8mve1gwao.png',
- }
+ //  const gridData = {
+ //   publicId: 'yakr7wsmcgk8mve1gwao',
+ //   url: 'https://res.cloudinary.com/dkxssdk96/image/upload/v1715617819/yakr7wsmcgk8mve1gwao.png',
+ //  }
  const resultsObj = {
   id: id,
   event: 'generate',
   data: {
-   imgData: caption === 'stack' ? stackData : gridData,
+   imgData: imgData,
    productId: productId,
    isGrid: isGrid,
    ff: ff,
    size: size,
    secVar: secVar,
-   meta: 'response',
+   meta: responseObj,
    style: style,
    caption: caption,
    prompt: prompt,
+   secVarLabel: secVarLabel,
   },
  }
  sendResults(resultsObj)
@@ -172,30 +174,32 @@ const makeGenerate = async (prompt, id) => {
 }
 
 const handleVariations = async (message, id) => {
- const dataObj = { ...message.data, id: id, event: 'variations' }
- const response = await makeVariations(dataObj)
- const responseObj = JSON.parse(response)
- const imgData = await uploadImageToCloudinary(responseObj.uri, responseObj.content, dataObj.style)
- const resultsObj = {
-  imgData: imgData,
-  meta: response,
-  id: id,
-  event: 'variations',
-  shape: dataObj.shape,
-  caption: dataObj.caption,
-  prompt: dataObj.prompt,
-  style: dataObj.style,
- }
- sendResults(resultsObj)
+ console.log('var message', message)
+ //  const dataObj = { ...message.data, id: id, event: 'variations' }
+ //  const response = await makeVariations(dataObj)
+ //  const responseObj = JSON.parse(response)
+ //  const imgData = await uploadImageToCloudinary(responseObj.uri, responseObj.content, dataObj.style)
+ //  const resultsObj = {
+ //   imgData: imgData,
+ //   meta: response,
+ //   id: id,
+ //   event: 'variations',
+ //   shape: dataObj.shape,
+ //   caption: dataObj.caption,
+ //   prompt: dataObj.prompt,
+ //   style: dataObj.style,
+ //  }
+ //  sendResults(resultsObj)
 }
 
 const makeVariations = async (dataObj) => {
- const { meta, activeIndex, prompt, id } = dataObj
+ //  console.log('dataObj', dataObj)
+ const { meta, index, prompt, id } = dataObj.data.data.generated
  await client.init()
  const data = JSON.parse(meta)
  try {
   const variations = await client.Variation({
-   index: activeIndex,
+   index: index,
    msgId: data.id,
    hash: data.hash,
    flags: data.flags,
