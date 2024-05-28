@@ -175,34 +175,34 @@ const makeGenerate = async (prompt, id) => {
 
 const handleVariations = async (message, id) => {
  console.log('var message', message)
- //  const dataObj = { ...message.data, id: id, event: 'variations' }
- //  const response = await makeVariations(dataObj)
- //  const responseObj = JSON.parse(response)
- //  const imgData = await uploadImageToCloudinary(responseObj.uri, responseObj.content, dataObj.style)
- //  const resultsObj = {
- //   imgData: imgData,
- //   meta: response,
- //   id: id,
- //   event: 'variations',
- //   shape: dataObj.shape,
- //   caption: dataObj.caption,
- //   prompt: dataObj.prompt,
- //   style: dataObj.style,
- //  }
- //  sendResults(resultsObj)
+ const dataObj = { event: message.event, id: message.id, data: JSON.parse(message.data) }
+ const responseObj = await makeVariations(dataObj)
+ console.log('responseObj', responseObj)
+ const imgData = await uploadImageToCloudinary(responseObj.uri, responseObj.content, dataObj.style)
+ const resultsObj = {
+  imgData: imgData,
+  meta: responseObj,
+  id: id,
+  event: 'variations',
+  shape: dataObj.shape,
+  caption: dataObj.caption,
+  prompt: dataObj.prompt,
+  style: dataObj.style,
+ }
+ sendResults(resultsObj)
 }
 
 const makeVariations = async (dataObj) => {
- //  console.log('dataObj', dataObj)
- const { meta, index, prompt, id } = dataObj.data.data.generated
+ const { event, id, data } = dataObj
+ const { meta, index, prompt } = data
+ console.log('makeVars:', data)
  await client.init()
- const data = JSON.parse(meta)
  try {
   const variations = await client.Variation({
    index: index,
-   msgId: data.id,
+   msgId: id,
    hash: data.hash,
-   flags: data.flags,
+   flags: 0,
    content: prompt,
    loading: (uri, progress) => {
     update(progress, id)
