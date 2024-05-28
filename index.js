@@ -111,37 +111,52 @@ const handleGenerate = async (message, id) => {
 
 const handleUpscale = async (message, id) => {
  console.log('upscale message recieved from ', id)
- const { meta, activeIndex, shape, prompt, caption, style } = message.data
- const response = await makeUpscale(meta, activeIndex)
+ const { event, data } = message.data
+ const dataObj = { event: event, id: id, data: JSON.parse(data) }
+ const { generated } = dataObj.data
+ console.log('upscale message', dataObj)
+ const response = await makeUpscale(dataObj)
  const responseObj = await JSON.parse(response)
  console.log('responseObj', responseObj)
+
  if (responseObj.error) {
   sendError(responseObj.error, id)
   return
  }
- const imgData = await uploadImageToCloudinary(responseObj.uri, responseObj.content, style)
+
+ const imgData = await uploadImageToCloudinary(responseObj.uri, responseObj.content, generated.style)
  const resultsObj = {
-  imgData: imgData,
-  meta: response,
   id: id,
-  shape: shape,
-  caption: caption,
-  prompt: prompt,
-  style: style,
   event: 'upscale',
+  data: {
+   imgData: imgData,
+   meta: responseObj,
+   productId: generated.productId,
+   isGrid: generated.isGrid,
+   isUpscaled: true,
+   ff: generated.ff,
+   size: generated.size,
+   secVar: generated.secVar,
+   secVarLabel: generated.secVarLabel,
+   caption: generated.caption,
+   prompt: generated.prompt,
+   style: generated.style,
+  },
  }
+
  sendResults(resultsObj)
 }
 
-const makeUpscale = async (job, index) => {
- await client.init()
- const data = JSON.parse(job)
+const makeUpscale = async (dataObj) => {
+ const { event, id, data } = dataObj
+ const { generated, index, prompt } = data
+ const { meta } = generated
  try {
   const upscale = await client.Upscale({
    index: index,
-   msgId: data.id,
-   hash: data.hash,
-   flags: data.flags,
+   msgId: meta.id,
+   hash: meta.hash,
+   flags: meta.flags,
    loading: (uri, progress) => {
     console.log('loading', uri, 'progress', progress)
    },
@@ -168,28 +183,27 @@ const makeGenerate = async (prompt, id) => {
 const handleVariations = async (message, id) => {
  console.log('var message', message)
 
- //  const dataObj = { event: message.event, id: message.id, data: JSON.parse(message.data) }
- //  const generated = dataObj.data.generated
- //  const response = await makeVariations(dataObj)
- //  const responseObj = await JSON.parse(response)
- //  console.log('responseObj', responseObj)
- //  const imgData = await uploadImageToCloudinary(responseObj.uri, responseObj.content, dataObj.style)
+ const dataObj = { event: message.event, id: message.id, data: JSON.parse(message.data) }
+ const generated = dataObj.data.generated
+ const response = await makeVariations(dataObj)
+ const responseObj = await JSON.parse(response)
+ console.log('responseObj', responseObj)
+ const imgData = await uploadImageToCloudinary(responseObj.uri, responseObj.content, dataObj.style)
  const resultsObj = {
   id: id,
   event: 'variations',
   data: {
-   ...responseData,
-   //    imgData: imgData,
-   //    meta: responseObj,
-   //    productId: generated.productId,
-   //    isGrid: generated.isGrid,
-   //    ff: generated.ff,
-   //    size: generated.size,
-   //    secVar: generated.secVar,
-   //    secVarLabel: generated.secVarLabel,
-   //    caption: generated.caption,
-   //    prompt: generated.prompt,
-   //    style: generated.style,
+   imgData: imgData,
+   meta: responseObj,
+   productId: generated.productId,
+   isGrid: generated.isGrid,
+   ff: generated.ff,
+   size: generated.size,
+   secVar: generated.secVar,
+   secVarLabel: generated.secVarLabel,
+   caption: generated.caption,
+   prompt: generated.prompt,
+   style: generated.style,
   },
  }
  sendResults(resultsObj)
