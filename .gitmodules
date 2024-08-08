@@ -1,0 +1,3 @@
+[submodule "im-midjourney-api"]
+	path = im-midjourney-api
+	url = https://github.com/FlapShatner/im-midjourney-api.git

@@ -7,9 +7,6 @@ import { v4 as uuidv4 } from 'uuid'
 import { uploadImageToCloudinary } from './lib/services.js'
 import suggestRoute from './routes/suggest.js'
 import api from './routes/api.js'
-import auth from './routes/auth.js'
-import { responseData } from './temp.js'
-import { job } from './job.js'
 
 dotenv.config()
 const app = express()
@@ -18,10 +15,9 @@ app.use(express.json())
 
 app.use('/suggest', suggestRoute)
 app.use('/', api)
-app.use('/auth', auth)
 
 app.get('/', (req, res) => {
- res.send('Hello From  MJ Backend!')
+ res.send('Hello From  MJ Backend!!')
 })
 
 const wss = new WebSocketServer({ server })
@@ -50,6 +46,7 @@ wss.on('connection', (connection, req) => {
  connection.on('close', () => handleClose(id))
  connection.on('message', (message) => handleMessage(message, id))
 })
+
 const update = (progress, id) => {
  console.log('update', progress, id)
  if (connections[id]) {
@@ -59,7 +56,7 @@ const update = (progress, id) => {
 }
 
 const sendResults = (resultsObj) => {
- console.log('resultsObj', resultsObj)
+ //  console.log('resultsObj', resultsObj)
  const { id } = resultsObj
  if (connections[id]) {
   const ws = connections[id]
@@ -76,13 +73,13 @@ const sendError = (error, id) => {
 
 const handleGenerate = async (message, id) => {
  if (!message.data.data) return
- console.log('generate message recieved from ', id, message.data.data)
+ //  console.log('generate message recieved from ', id, message.data.data)
  const { prompt, caption, productId, isGrid, ff, size, secVar, style, secVarLabel } = JSON.parse(message.data.data)
  if (!prompt) return
  await client.init()
- console.log('message:', message)
+ //  console.log('message:', message)
  const response = await makeGenerate(prompt, id)
- console.log('response', response)
+ //  console.log('response', response)
  if (response.error) {
   sendError(response.error, id)
   return
@@ -117,7 +114,7 @@ const handleUpscale = async (message, id) => {
  console.log('upscale message', dataObj)
  const response = await makeUpscale(dataObj)
  const responseObj = await JSON.parse(response)
- console.log('responseObj', responseObj)
+ //  console.log('responseObj', responseObj)
 
  if (responseObj.error) {
   sendError(responseObj.error, id)
@@ -187,7 +184,7 @@ const handleVariations = async (message, id) => {
  const generated = dataObj.data.generated
  const response = await makeVariations(dataObj)
  const responseObj = await JSON.parse(response)
- console.log('responseObj', responseObj)
+ //  console.log('responseObj', responseObj)
  const imgData = await uploadImageToCloudinary(responseObj.uri, responseObj.content, dataObj.style)
  const resultsObj = {
   id: id,
@@ -197,6 +194,7 @@ const handleVariations = async (message, id) => {
    meta: responseObj,
    productId: generated.productId,
    isGrid: generated.isGrid,
+   isUpscaled: false,
    ff: generated.ff,
    size: generated.size,
    secVar: generated.secVar,
@@ -233,7 +231,17 @@ const makeVariations = async (dataObj) => {
  }
 }
 
+const handlePong = (message, id) => {
+ const ws = connections[id]
+ ws.send('pong')
+}
+
 const handleMessage = async (bytes, id) => {
+ if (bytes.toString() === 'ping') {
+  const message = { event: bytes.toString() }
+  handlePong(message, id)
+  return
+ }
  const message = JSON.parse(bytes)
  //  console.log('message', message)
  if (message.data) {
