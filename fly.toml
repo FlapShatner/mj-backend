@@ -1,9 +1,9 @@
-# fly.toml app configuration file generated for mj-backend-im on 2025-02-01T07:54:42Z
+# fly.toml app configuration file generated for mj-backend on 2025-02-01T08:15:51Z
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'mj-backend-im'
+app = 'mj-backend'
 primary_region = 'dfw'
 
 [build]
