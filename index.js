@@ -111,7 +111,7 @@ const handleUpscale = async (message, id) => {
  const { event, data } = message.data
  const dataObj = { event: event, id: id, data: JSON.parse(data) }
  const { generated } = dataObj.data
- console.log('upscale message', dataObj)
+ //  console.log('upscale message', dataObj)
  const response = await makeUpscale(dataObj)
  const responseObj = await JSON.parse(response)
  //  console.log('responseObj', responseObj)
@@ -171,6 +171,7 @@ const makeGenerate = async (prompt, id) => {
    update(progress, id)
    console.log('loading', uri, 'progress', progress)
   })
+  //   console.log(job)
   return JSON.stringify(job)
  } catch (error) {
   return { error: error.message }
@@ -178,7 +179,7 @@ const makeGenerate = async (prompt, id) => {
 }
 
 const handleVariations = async (message, id) => {
- console.log('var message', message)
+ //  console.log('var message', message)
 
  const dataObj = { event: message.event, id: message.id, data: JSON.parse(message.data) }
  const generated = dataObj.data.generated
@@ -211,7 +212,7 @@ const makeVariations = async (dataObj) => {
  const { event, id, data } = dataObj
  const { generated, index, prompt } = data
  const { meta } = generated
- console.log('makeVars:', data)
+ //  console.log('makeVars:', data)
  await client.init()
  try {
   const variations = await client.Variation({

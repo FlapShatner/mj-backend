@@ -1,0 +1,39 @@
+diff --git a/node_modules/midjourney/libs/discord.ws.js b/node_modules/midjourney/libs/discord.ws.js
+index a3549b2..82a14e3 100644
+--- a/node_modules/midjourney/libs/discord.ws.js
++++ b/node_modules/midjourney/libs/discord.ws.js
+@@ -386,16 +386,16 @@ class WsMessage {
+         }
+         event.prompt = content;
+         //not image
+-        if (!attachments || attachments.length === 0) {
+-            return;
+-        }
+-        let uri = attachments[0].url;
++        let uri = "no attachment"
++        if (attachments && attachments.length > 0) {
++      uri = attachments[0].url;
++    }
+         if (this.config.ImageProxy !== "") {
+             uri = uri.replace("https://cdn.discordapp.com/", this.config.ImageProxy);
+         }
+         const MJmsg = {
+             uri: uri,
+-            proxy_url: attachments[0].proxy_url,
++            proxy_url: attachments.length > 0 ? attachments[0].proxy_url : '',
+             content: content,
+             flags: flags,
+             progress: (0, utils_1.content2progress)(content),
+diff --git a/node_modules/midjourney/src/discord.ws.ts b/node_modules/midjourney/src/discord.ws.ts
+index e9e0624..33e2b5e 100644
+--- a/node_modules/midjourney/src/discord.ws.ts
++++ b/node_modules/midjourney/src/discord.ws.ts
+@@ -442,7 +442,7 @@ export class WsMessage {
+     }
+     const MJmsg: MJMessage = {
+       uri: uri,
+-      proxy_url: attachments[0].proxy_url,
++      proxy_url: attachments.length > 0 ? attachments[0].proxy_url : '',
+       content: content,
+       flags: flags,
+       progress: content2progress(content),
